@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>우리 반 1인 1역할 배정판</title>
+  
+  <!-- 학교 게시판 전용 웹폰트 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- 꽃가루(Confetti) 라이브러리 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- PDF 저장 라이브러리 (html2pdf) CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    /* =========================================
+       파스텔 민트 & 코랄 테마 시스템
+    ========================================= */
+    :root {
+      --bg-canvas: #f2f9f8;
+      --card-bg: #ffffff;
+      
+      --mint-light: #e6f7f4;
+      --mint-main: #38b293;
+      --mint-dark: #1d6e59;
+      --mint-hover: #2ea083;
+      
+      --coral-light: #fff0ed;
+      --coral-main: #ff7660;
+      --coral-dark: #cc4f3b;
+      --coral-hover: #ff6047;
+      
+      --text-main: #243330;
+      --text-muted: #5e7a74;
+      --border-color: #d1ebe5;
+      --border-dashed: #a3d9cd;
+      --shadow-sm: 0 4px 14px rgba(36, 80, 70, 0.06);
+      --shadow-md: 0 8px 24px rgba(36, 80, 70, 0.1);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      padding: 24px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    /* 상단 헤더 */
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+      background: var(--card-bg);
+      padding: 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border-top: 8px solid var(--mint-main);
+    }
+
+    header h1 {
+      font-family: 'Jua', sans-serif;
+      font-size: 2.7rem;
+      color: var(--mint-dark);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* 2열 입력창 레이아웃 */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .input-card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .input-header h2 {
+      font-family: 'Jua', sans-serif;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+    }
+
+    .badge-count {
+      background: var(--mint-light);
+      color: var(--mint-dark);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    textarea {
+      width: 100%;
+      height: 190px;
+      padding: 12px 16px;
+      font-size: 1.15rem;
+      font-family: inherit;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      resize: vertical;
+      outline: none;
+      transition: all 0.2s;
+      line-height: 1.6;
+      background-color: #fafefd;
+    }
+
+    textarea:focus {
+      border-color: var(--mint-main);
+      background-color: #ffffff;
+      box-shadow: 0 0 0 4px rgba(56, 178, 147, 0.15);
+    }
+
+    .textarea-guide {
+      margin-top: 6px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    /* 사전 고정 핀 영역 */
+    .pin-card {
+      background: var(--card-bg);
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 2px dashed var(--coral-main);
+      margin-bottom: 22px;
+    }
+
+    .pin-title {
+      font-family: 'Jua', sans-serif;
+      font-size: 1.4rem;
+      color: var(--coral-dark);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pin-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    select {
+      font-family: inherit;
+      font-size: 1.05rem;
+      padding: 10px 14px;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      outline: none;
+      background: white;
+      color: var(--text-main);
+      flex: 1;
+      min-width: 220px;
+    }
+
+    select:focus {
+      border-color: var(--coral-main);
+    }
+
+    .btn-pin-add {
+      background: var(--coral-main);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-pin-add:hover {
+      background: var(--coral-hover);
+    }
+
+    .pinned-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pin-tag {
+      background: var(--coral-light);
+      border: 1.5px solid var(--coral-main);
+      color: var(--coral-dark);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pin-tag button {
+      background: none;
+      border: none;
+      color: var(--coral-dark);
+      font-weight: bold;
+      font-size: 1.15rem;
+      cursor: pointer;
+    }
+
+    /* 조작 액션 바 */
+    .action-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .btn-main {
+      font-family: 'Jua', sans-serif;
+      font-size: 2.1rem;
+      padding: 16px 52px;
+      background: linear-gradient(135deg, var(--coral-main), var(--coral-hover));
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(255, 118, 96, 0.35);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-main:hover:not(:disabled) {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 14px 28px rgba(255, 118, 96, 0.45);
+    }
+
+    .btn-main:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .sub-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn-sub {
+      background: white;
+      border: 1.5px solid var(--border-color);
+      padding: 9px 18px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-sub:hover {
+      background: var(--mint-light);
+      border-color: var(--mint-main);
+      color: var(--mint-dark);
+    }
+
+    .btn-pdf {
+      background: #e35050;
+      color: white;
+      border: none;
+    }
+    .btn-pdf:hover {
+      background: #c83838;
+      color: white;
+    }
+
+    .btn-print {
+      background: var(--mint-main);
+      color: white;
+      border: none;
+    }
+    .btn-print:hover {
+      background: var(--mint-hover);
+      color: white;
+    }
+
+    /* =========================================
+       [3] 학생 직접 드래그 & 드롭 대기 풀 (Pool)
+    ========================================= */
+    .drag-pool-section {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      border: 2px dashed var(--mint-main);
+      margin-bottom: 26px;
+      transition: background-color 0.2s;
+    }
+
+    .drag-pool-section.drag-over {
+      background-color: var(--mint-light);
+    }
+
+    .pool-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pool-title {
+      font-family: 'Jua', sans-serif;
+      font-size: 1.6rem;
+      color: var(--mint-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pool-guide {
+      font-size: 1rem;
+      color: var(--coral-dark);
+      font-weight: 700;
+    }
+
+    .unassigned-chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      min-height: 58px;
+      padding: 12px;
+      background: #fafefd;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      align-items: center;
+    }
+
+    /* 드래그 가능한 학생 칩 */
+    .student-chip {
+      background: white;
+      border: 2px solid var(--mint-main);
+      color: var(--mint-dark);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      cursor: grab;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      transition: all 0.2s;
+    }
+
+    .student-chip:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(56, 178, 147, 0.25);
+      border-color: var(--coral-main);
+      color: var(--coral-dark);
+    }
+
+    .student-chip:active {
+      cursor: grabbing;
+    }
+
+    /* 전자칠판 터치 선택용 하이라이트 */
+    .student-chip.touch-selected {
+      background: var(--coral-main);
+      color: white;
+      border-color: var(--coral-dark);
+      transform: scale(1.08);
+      box-shadow: 0 0 0 4px rgba(255, 118, 96, 0.4);
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1.05); }
+      100% { transform: scale(1.12); }
+    }
+
+    .student-chip.is-pinned-chip {
+      border-color: var(--coral-main);
+      background: var(--coral-light);
+      color: var(--coral-dark);
+    }
+
+    .student-chip .chip-remove-btn {
+      color: #999;
+      font-weight: bold;
+      margin-left: 2px;
+      cursor: pointer;
+    }
+
+    .student-chip .chip-remove-btn:hover {
+      color: var(--coral-dark);
+    }
+
+    /* =========================================
+       [1] 다인원 역할 카드 그리드 (Drop Zones)
+    ========================================= */
+    .result-section {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 26px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--mint-light);
+      padding-bottom: 14px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .result-header h2 {
+      font-family: 'Jua', sans-serif;
+      font-size: 2rem;
+      color: var(--mint-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .role-card {
+      background: #ffffff;
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s;
+      min-height: 180px;
+      position: relative;
+    }
+
+    .role-card.drag-target-hover {
+      border-color: var(--coral-main);
+      background: var(--coral-light);
+      transform: scale(1.02);
+    }
+
+    .role-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1.5px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .role-title {
+      font-family: 'Jua', sans-serif;
+      font-size: 1.45rem;
+      color: var(--coral-dark);
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .role-quota-badge {
+      font-size: 0.95rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #edf2f7;
+      color: #4a5568;
+      white-space: nowrap;
+      margin-left: 8px;
+    }
+
+    .role-quota-badge.is-full {
+      background: var(--mint-main);
+      color: white;
+    }
+
+    .role-drop-zone {
+      flex: 1;
+      background: #fbfdfd;
+      border: 2px dashed var(--border-dashed);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 8px;
+      min-height: 90px;
+      transition: background 0.15s;
+    }
+
+    .role-drop-zone.slot-rolling {
+      animation: slotShake 0.08s infinite alternate;
+      background: #fff8d6 !important;
+      border-color: #ffd152 !important;
+    }
+
+    @keyframes slotShake {
+      0% { transform: translateY(-2px); }
+      100% { transform: translateY(2px); }
+    }
+
+    .drop-placeholder {
+      width: 100%;
+      text-align: center;
+      color: #9cb3ad;
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 18px;
+      pointer-events: none;
+    }
+
+    /* =========================================
+       [2] PDF 및 인쇄용 전용 스타일
+    ========================================= */
+    #pdfPrintTarget {
+      background: white;
+    }
+
+    .pdf-header-box {
+      display: none;
+      border-bottom: 3px solid #243330;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+
+    .pdf-header-title {
+      font-size: 26pt;
+      font-family: 'Jua', sans-serif;
+      color: #1d6e59;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .pdf-header-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11pt;
+      font-weight: 700;
+      color: #333;
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm;
+      }
+      body {
+        background: white !important;
+        padding: 0 !important;
+      }
+      header, .input-grid, .pin-card, .action-container, .drag-pool-section, .textarea-guide {
+        display: none !important;
+      }
+      .result-section {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      .pdf-header-box {
+        display: block !important;
+      }
+      .role-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+      }
+      .role-card {
+        page-break-inside: avoid;
+        border: 1.5px solid #444 !important;
+        box-shadow: none !important;
+      }
+      .role-title {
+        color: #000 !important;
+        font-size: 13pt !important;
+      }
+      .student-chip {
+        border: 1px solid #444 !important;
+        color: #000 !important;
+        background: #f1f1f1 !important;
+        font-size: 11pt !important;
+      }
+      .chip-remove-btn {
+        display: none !important;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+      header h1 {
+        font-size: 2.1rem;
+      }
+      .btn-main {
+        font-size: 1.6rem;
+        padding: 14px 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="pdfPrintTarget">
+    
+    <!-- PDF / 인쇄 전용 헤더 -->
+    <div class="pdf-header-box" id="pdfHeaderBox">
+      <div class="pdf-header-title">🏫 우리 반 1인 1역할 배정 결과표</div>
+      <div class="pdf-header-meta">
+        <span id="pdfDateText">배정일: </span>
+        <span>담임교사 확인: _________________ (인)</span>
+      </div>
+    </div>
+
+    <!-- 브라우저 헤더 -->
+    <header>
+      <h1>🏫 우리 반 1인 1역할 배정판</h1>
+      <p>다인원 정원 배정 • 스마트보드 드래그 앤 드롭 • 슬롯머신 랜덤 & PDF 다운로드</p>
+    </header>
+
+    <!-- 입력 섹션 -->
+    <div class="input-grid">
+      <!-- 왼쪽: 학생 목록 -->
+      <section class="input-card">
+        <div class="input-header">
+          <h2>🧑‍🎓 학생 이름 목록</h2>
+          <span class="badge-count" id="studentCountBadge">0명</span>
+        </div>
+        <textarea id="studentsInput" placeholder="학생 이름을 줄바꿈(엔터)으로 입력하세요."></textarea>
+        <div class="textarea-guide">한 줄에 한 명씩 입력 (순서 무관)</div>
+      </section>
+
+      <!-- 오른쪽: 역할 목록 (인원수 설정 기능 지원) -->
+      <section class="input-card">
+        <div class="input-header">
+          <h2>📋 역할 목록 (정원 설정 가능)</h2>
+          <span class="badge-count" id="roleCountBadge">0개 (총 0자리)</span>
+        </div>
+        <textarea id="rolesInput" placeholder="예: 칠판 지우기 (2명)&#10;우유 당번 (2)&#10;창문 환기 (1)"></textarea>
+        <div class="textarea-guide">역할 뒤에 <strong>(2명)</strong> 또는 <strong>(3)</strong>처럼 정원을 적으세요 (생략 시 1명)</div>
+      </section>
+    </div>
+
+    <!-- 사전 고정 핀 (지정 학생 역할 고정) -->
+    <section class="pin-card">
+      <div class="pin-title">📌 사전 고정 핀 (특정 학생 역할 미리 지정하기)</div>
+      <div class="pin-controls">
+        <select id="pinStudentSelect">
+          <option value="">고정할 학생 선택</option>
+        </select>
+        <select id="pinRoleSelect">
+          <option value="">고정할 역할 선택</option>
+        </select>
+        <button type="button" class="btn-pin-add" id="addPinBtn">📌 고정 등록</button>
+      </div>
+      <div class="pinned-list" id="pinnedList"></div>
+    </section>
+
+    <!-- 중앙 컨트롤 바 -->
+    <div class="action-container">
+      <button class="btn-main" id="assignBtn">
+        <span id="assignBtnText">🎲 남은 인원 슬롯머신 배정</span>
+      </button>
+      <div class="sub-buttons">
+        <button class="btn-sub btn-pdf" id="pdfBtn">📥 PDF 다운로드</button>
+        <button class="btn-sub btn-print" id="printBtn">🖨️ A4 출력하기</button>
+        <button class="btn-sub" id="resetToPoolBtn">🖐️ 모두 직접 선택(대기풀로 이동)</button>
+        <button class="btn-sub" id="copyBtn">📋 결과 텍스트 복사</button>
+        <button class="btn-sub" id="restoreDefaultsBtn">🔄 기본 예시 불러오기</button>
+      </div>
+    </div>
+
+    <!-- [3] 드래그 앤 드롭: 미배정 학생 대기 풀 -->
+    <section class="drag-pool-section" id="unassignedPool">
+      <div class="pool-header">
+        <div class="pool-title">
+          <span>🧑‍🎓 미배정 학생 명단</span>
+          <span class="badge-count" id="unassignedCountBadge">0명</span>
+        </div>
+        <div class="pool-guide">
+          💡 마우스로 드래그하거나, <strong>이름 터치 ➔ 역할 상자 터치</strong>로 쏙 넣을 수 있어요!
+        </div>
+      </div>
+      <div class="unassigned-chips-container" id="unassignedChipsBox">
+        <!-- 아직 역할에 안 들어간 학생 칩들 -->
+      </div>
+    </section>
+
+    <!-- [1] 역할 카드 그리드 (Drop Zones) -->
+    <section class="result-section">
+      <div class="result-header">
+        <h2>🎉 학급 역할 배정판</h2>
+        <div style="font-weight:700; color:var(--text-muted);" id="boardStatus">
+          학생 이름을 원하는 역할에 직접 끌어다 놓거나, 상단의 랜덤 배정 버튼을 누르세요.
+        </div>
+      </div>
+
+      <div class="role-grid" id="roleCardsGrid">
+        <!-- 역할별 드롭존 카드들이 동적으로 생성됩니다 -->
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // 기본 예시 데이터 (10명 학생, 총 10자리 다인원 역할)
+    const DEFAULT_STUDENTS = [
+      "김민준", "이서아", "박도윤", "최지우", "정하은",
+      "강시우", "조예준", "윤수아", "임지호", "한채원"
+    ];
+
+    const DEFAULT_ROLES_TEXT = 
+`🧹 칠판 지우기 및 분필 정리 (2명)
+🥛 우유 급식 배부 및 상자 정리 (2명)
+♻️ 재활용 분리수거 지킴이 (2명)
+🪟 창문 환기 및 교실 소등 (1명)
+🍱 점심 급식 줄서기 도우미 (2명)
+📚 학급문고 도서 정리 (1명)`;
+
+    // DOM 요소 캐싱
+    const studentsInput = document.getElementById('studentsInput');
+    const rolesInput = document.getElementById('rolesInput');
+    const studentCountBadge = document.getElementById('studentCountBadge');
+    const roleCountBadge = document.getElementById('roleCountBadge');
+    const pinStudentSelect = document.getElementById('pinStudentSelect');
+    const pinRoleSelect = document.getElementById('pinRoleSelect');
+    const addPinBtn = document.getElementById('addPinBtn');
+    const pinnedListContainer = document.getElementById('pinnedList');
+    const assignBtn = document.getElementById('assignBtn');
+    const assignBtnText = document.getElementById('assignBtnText');
+    const unassignedPool = document.getElementById('unassignedPool');
+    const unassignedChipsBox = document.getElementById('unassignedChipsBox');
+    const unassignedCountBadge = document.getElementById('unassignedCountBadge');
+    const roleCardsGrid = document.getElementById('roleCardsGrid');
+    const boardStatus = document.getElementById('boardStatus');
+    const pdfBtn = document.getElementById('pdfBtn');
+    const printBtn = document.getElementById('printBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const resetToPoolBtn = document.getElementById('resetToPoolBtn');
+    const restoreDefaultsBtn = document.getElementById('restoreDefaultsBtn');
+    const pdfHeaderBox = document.getElementById('pdfHeaderBox');
+    const pdfDateText = document.getElementById('pdfDateText');
+
+    // 앱 데이터 상태
+    let parsedRoles = []; // [{ id, name, capacity, assigned: [studentName, ...] }]
+    let allStudentNames = [];
+    let pinnedPairs = []; // [{ student: string, roleName: string }]
+    let isShuffling = false;
+    let selectedStudentForTouch = null; // 전자칠판 터치 선택용
+
+    // 텍스트 줄바꿈 파싱
+    function parseLines(text) {
+      return text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+    }
+
+    // 역할 목록 파싱 (예: "칠판 지우기 (2명)" -> name: "칠판 지우기", capacity: 2)
+    function parseRolesText(text) {
+      const lines = parseLines(text);
+      return lines.map((line, idx) => {
+        const match = line.match(/^(.*?)\s*[\(\[]\s*(\d+)\s*(?:명|인)?\s*[\)\]]$/);
+        if (match) {
+          return {
+            id: 'role_' + idx,
+            name: match[1].trim(),
+            capacity: Math.max(1, parseInt(match[2], 10)),
+            assigned: []
+          };
+        }
+        return {
+          id: 'role_' + idx,
+          name: line,
+          capacity: 1,
+          assigned: []
+        };
+      });
+    }
+
+    // 데이터 동기화 & 화면 갱신
+    function syncData(preserveAssignments = true) {
+      allStudentNames = parseLines(studentsInput.value);
+      const newRoles = parseRolesText(rolesInput.value);
+
+      // 기존 배정 유지하면서 역할 업데이트
+      if (preserveAssignments && parsedRoles.length > 0) {
+        newRoles.forEach(nr => {
+          const matchedOld = parsedRoles.find(or => or.name === nr.name);
+          if (matchedOld) {
+            // 여전히 유효한 학생만 유지
+            nr.assigned = matchedOld.assigned.filter(st => allStudentNames.includes(st)).slice(0, nr.capacity);
+          }
+        });
+      }
+
+      parsedRoles = newRoles;
+
+      // 핀 목록 중 유효하지 않은 학생/역할 제거
+      pinnedPairs = pinnedPairs.filter(p => 
+        allStudentNames.includes(p.student) && parsedRoles.some(r => r.name === p.roleName)
+      );
+
+      // 핀 설정된 학생은 무조건 해당 역할에 반영
+      pinnedPairs.forEach(pin => {
+        const targetRole = parsedRoles.find(r => r.name === pin.roleName);
+        if (targetRole && !targetRole.assigned.includes(pin.student)) {
+          // 다른 역할에 이미 있으면 제거
+          parsedRoles.forEach(r => {
+            r.assigned = r.assigned.filter(s => s !== pin.student);
+          });
+          if (targetRole.assigned.length < targetRole.capacity) {
+            targetRole.assigned.push(pin.student);
+          }
+        }
+      });
+
+      // 정원 정보 계산
+      const totalCapacity = parsedRoles.reduce((sum, r) => sum + r.capacity, 0);
+      studentCountBadge.textContent = `${allStudentNames.length}명`;
+      roleCountBadge.textContent = `${parsedRoles.length}개 (총 ${totalCapacity}자리)`;
+
+      updatePinDropdowns();
+      renderPinTags();
+      renderBoard();
+    }
+
+    // 사전 고정 핀 드롭다운 갱신
+    function updatePinDropdowns() {
+      const curStudent = pinStudentSelect.value;
+      const curRole = pinRoleSelect.value;
+
+      pinStudentSelect.innerHTML = '<option value="">고정할 학생 선택</option>';
+      pinRoleSelect.innerHTML = '<option value="">고정할 역할 선택</option>';
+
+      const pinnedStudentNames = pinnedPairs.map(p => p.student);
+
+      allStudentNames.forEach(st => {
+        if (!pinnedStudentNames.includes(st)) {
+          const opt = document.createElement('option');
+          opt.value = st;
+          opt.textContent = st;
+          pinStudentSelect.appendChild(opt);
+        }
+      });
+
+      parsedRoles.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.name;
+        opt.textContent = `${r.name} (정원 ${r.capacity}명)`;
+        pinRoleSelect.appendChild(opt);
+      });
+
+      if (!pinnedStudentNames.includes(curStudent)) pinStudentSelect.value = curStudent;
+      pinRoleSelect.value = curRole;
+    }
+
+    // 고정 핀 태그 렌더링
+    function renderPinTags() {
+      pinnedListContainer.innerHTML = '';
+      if (pinnedPairs.length === 0) {
+        pinnedListContainer.innerHTML = '<span style="color:#8da4a0; font-size:0.95rem;">고정된 학생이 없습니다. 미리 지정할 학생이 있다면 위에서 등록하세요.</span>';
+        return;
+      }
+      pinnedPairs.forEach((pair, idx) => {
+        const tag = document.createElement('span');
+        tag.className = 'pin-tag';
+        tag.innerHTML = `
+          <span>📌 <strong>${pair.student}</strong> ➔ ${pair.roleName}</span>
+          <button type="button" title="고정 해제" onclick="removePin(${idx})">&times;</button>
+        `;
+        pinnedListContainer.appendChild(tag);
+      });
+    }
+
+    // 핀 추가
+    addPinBtn.addEventListener('click', () => {
+      const student = pinStudentSelect.value;
+      const roleName = pinRoleSelect.value;
+      if (!student || !roleName) {
+        alert("고정할 학생과 역할을 모두 선택해 주세요!");
+        return;
+      }
+
+      const targetRole = parsedRoles.find(r => r.name === roleName);
+      if (targetRole) {
+        const currentPinnedInRole = pinnedPairs.filter(p => p.roleName === roleName).length;
+        if (currentPinnedInRole >= targetRole.capacity) {
+          alert(`'${roleName}' 역할의 정원(${targetRole.capacity}명)이 이미 꽉 찼습니다!`);
+          return;
+        }
+      }
+
+      pinnedPairs.push({ student, roleName });
+      syncData(true);
+    });
+
+    // 핀 제거
+    window.removePin = function(idx) {
+      pinnedPairs.splice(idx, 1);
+      syncData(true);
+    };
+
+    // =========================================
+    // [3] 드래그 앤 드롭 & 터치 선택 UI 렌더링
+    // =========================================
+    function renderBoard() {
+      // 1. 배정된 학생 목록 추출
+      const assignedStudents = [];
+      parsedRoles.forEach(r => {
+        r.assigned.forEach(st => assignedStudents.push(st));
+      });
+
+      // 2. 미배정 학생 목록
+      const unassignedStudents = allStudentNames.filter(st => !assignedStudents.includes(st));
+      unassignedCountBadge.textContent = `${unassignedStudents.length}명`;
+
+      // 대기풀 렌더링
+      unassignedChipsBox.innerHTML = '';
+      if (unassignedStudents.length === 0) {
+        unassignedChipsBox.innerHTML = '<span style="color:#4a7c59; font-weight:700; padding:4px;">🎉 모든 학생의 역할 배정이 완료되었습니다!</span>';
+      } else {
+        unassignedStudents.forEach(st => {
+          const chip = createStudentChip(st);
+          unassignedChipsBox.appendChild(chip);
+        });
+      }
+
+      // 역할 카드 렌더링
+      roleCardsGrid.innerHTML = '';
+      parsedRoles.forEach(role => {
+        const card = document.createElement('div');
+        card.className = 'role-card';
+        card.dataset.roleId = role.id;
+
+        const isFull = role.assigned.length >= role.capacity;
+        
+        card.innerHTML = `
+          <div class="role-card-header">
+            <div class="role-title">${role.name}</div>
+            <div class="role-quota-badge ${isFull ? 'is-full' : ''}">
+              ${role.assigned.length} / ${role.capacity}명 ${isFull ? '✅ 완료' : ''}
+            </div>
+          </div>
+          <div class="role-drop-zone" id="zone_${role.id}">
+            ${role.assigned.length === 0 ? '<div class="drop-placeholder">여기로 학생을 끌어오세요</div>' : ''}
+          </div>
+        `;
+
+        const dropZone = card.querySelector('.role-drop-zone');
+
+        // 배정된 학생 칩 추가
+        role.assigned.forEach(st => {
+          const isPinned = pinnedPairs.some(p => p.student === st && p.roleName === role.name);
+          const chip = createStudentChip(st, isPinned, role.id);
+          dropZone.appendChild(chip);
+        });
+
+        // 카드 클릭 시 (전자칠판 터치 이동용)
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.chip-remove-btn')) return;
+          if (selectedStudentForTouch) {
+            assignStudentToRole(selectedStudentForTouch, role.id);
+            clearTouchSelection();
+          }
+        });
+
+        // 드래그 앤 드롭 리스너 (HTML5 DnD)
+        setupDropZoneEvents(card, role.id);
+
+        roleCardsGrid.appendChild(card);
+      });
+    }
+
+    // 학생 칩 생성 함수
+    function createStudentChip(studentName, isPinned = false, currentRoleId = null) {
+      const chip = document.createElement('div');
+      chip.className = `student-chip ${isPinned ? 'is-pinned-chip' : ''}`;
+      chip.draggable = !isPinned; // 고정된 학생은 드래그 불가
+      chip.dataset.student = studentName;
+      chip.dataset.fromRole = currentRoleId || 'pool';
+
+      chip.innerHTML = `
+        <span>${isPinned ? '📌' : '🧑‍🎓'} ${studentName}</span>
+        ${currentRoleId ? `<span class="chip-remove-btn" title="대기 풀로 이동">&times;</span>` : ''}
+      `;
+
+      // 칩 클릭 시 (전자칠판 터치 모드)
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (e.target.classList.contains('chip-remove-btn')) {
+          removeStudentFromRole(studentName);
+          return;
+        }
+
+        if (isPinned) {
+          alert("이 학생은 사전 고정 핀으로 지정되어 있습니다. 핀을 해제한 후 이동해 주세요!");
+          return;
+        }
+
+        if (selectedStudentForTouch === studentName) {
+          clearTouchSelection();
+        } else {
+          clearTouchSelection();
+          selectedStudentForTouch = studentName;
+          chip.classList.add('touch-selected');
+          boardStatus.textContent = `👉 [${studentName}] 학생 선택됨! 원하는 역할 상자를 터치하세요.`;
+        }
+      });
+
+      // 마우스 드래그 시작
+      chip.addEventListener('dragstart', (e) => {
+        if (isPinned) {
+          e.preventDefault();
+          return;
+        }
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+          student: studentName,
+          fromRole: currentRoleId || 'pool'
+        }));
+        chip.style.opacity = '0.5';
+      });
+
+      chip.addEventListener('dragend', () => {
+        chip.style.opacity = '1';
+      });
+
+      return chip;
+    }
+
+    // 드롭존 드래그 이벤트 연결
+    function setupDropZoneEvents(targetElement, roleId) {
+      targetElement.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        targetElement.classList.add('drag-target-hover');
+      });
+
+      targetElement.addEventListener('dragleave', () => {
+        targetElement.classList.remove('drag-target-hover');
+      });
+
+      targetElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        targetElement.classList.remove('drag-target-hover');
+        try {
+          const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+          if (data && data.student) {
+            assignStudentToRole(data.student, roleId);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }
+
+    // 대기풀 드롭존 연결 (역할 -> 대기풀로 복귀)
+    unassignedPool.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      unassignedPool.classList.add('drag-over');
+    });
+
+    unassignedPool.addEventListener('dragleave', () => {
+      unassignedPool.classList.remove('drag-over');
+    });
+
+    unassignedPool.addEventListener('drop', (e) => {
+      e.preventDefault();
+      unassignedPool.classList.remove('drag-over');
+      try {
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        if (data && data.student) {
+          removeStudentFromRole(data.student);
+        }
+      } catch (err) {}
+    });
+
+    unassignedPool.addEventListener('click', () => {
+      if (selectedStudentForTouch) {
+        removeStudentFromRole(selectedStudentForTouch);
+        clearTouchSelection();
+      }
+    });
+
+    function clearTouchSelection() {
+      selectedStudentForTouch = null;
+      document.querySelectorAll('.student-chip').forEach(c => c.classList.remove('touch-selected'));
+      boardStatus.textContent = "학생 이름을 원하는 역할에 직접 끌어다 놓거나, 상단의 랜덤 배정 버튼을 누르세요.";
+    }
+
+    // 학생을 특정 역할에 배정하는 함수
+    function assignStudentToRole(studentName, targetRoleId) {
+      const targetRole = parsedRoles.find(r => r.id === targetRoleId);
+      if (!targetRole) return;
+
+      // 이미 해당 역할에 있으면 무시
+      if (targetRole.assigned.includes(studentName)) return;
+
+      // 정원 초과 검사
+      if (targetRole.assigned.length >= targetRole.capacity) {
+        alert(`'${targetRole.name}' 역할은 정원(${targetRole.capacity}명)이 꽉 찼습니다!`);
+        return;
+      }
+
+      // 다른 역할에서 빼기
+      parsedRoles.forEach(r => {
+        r.assigned = r.assigned.filter(s => s !== studentName);
+      });
+
+      // 새 역할에 추가
+      targetRole.assigned.push(studentName);
+      renderBoard();
+    }
+
+    // 학생을 역할에서 빼내어 대기풀로 보내기
+    function removeStudentFromRole(studentName) {
+      const isPinned = pinnedPairs.some(p => p.student === studentName);
+      if (isPinned) {
+        alert("이 학생은 사전 고정 핀으로 지정되어 있어 뺄 수 없습니다. 상단에서 핀을 먼저 해제해 주세요!");
+        return;
+      }
+      parsedRoles.forEach(r => {
+        r.assigned = r.assigned.filter(s => s !== studentName);
+      });
+      renderBoard();
+    }
+
+    // Fisher-Yates 셔플
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // =========================================
+    // 슬롯머신 랜덤 배정 (남은 학생들 2초간 섞기)
+    // =========================================
+    assignBtn.addEventListener('click', () => {
+      if (isShuffling) return;
+
+      if (allStudentNames.length === 0) {
+        alert("학생 이름을 1명 이상 입력해 주세요!");
+        return;
+      }
+      if (parsedRoles.length === 0) {
+        alert("역할을 1개 이상 입력해 주세요!");
+        return;
+      }
+
+      // 고정된 학생은 이미 자리에 유지, 나머지 학생 추출
+      const pinnedStudents = pinnedPairs.map(p => p.student);
+      const studentsToAssign = shuffle(allStudentNames.filter(st => !pinnedStudents.includes(st)));
+
+      if (studentsToAssign.length === 0) {
+        alert("모든 학생이 이미 고정되어 있거나 배정할 학생이 없습니다!");
+        return;
+      }
+
+      // 빈 슬롯 계산
+      const availableRoleSlots = [];
+      parsedRoles.forEach(r => {
+        // 기존 배정 중 핀이 아닌 학생은 리셋 후 재추첨
+        r.assigned = r.assigned.filter(st => pinnedStudents.includes(st));
+        const freeSpots = r.capacity - r.assigned.length;
+        for (let i = 0; i < freeSpots; i++) {
+          availableRoleSlots.push(r.id);
+        }
+      });
+
+      if (availableRoleSlots.length === 0) {
+        alert("모든 역할의 정원이 이미 꽉 찼습니다!");
+        return;
+      }
+
+      const shuffledRoleSlots = shuffle(availableRoleSlots);
+
+      // 최종 매칭 계획 수립
+      const plannedAssignments = [];
+      const assignCount = Math.min(studentsToAssign.length, shuffledRoleSlots.length);
+
+      for (let i = 0; i < assignCount; i++) {
+        plannedAssignments.push({
+          student: studentsToAssign[i],
+          roleId: shuffledRoleSlots[i]
+        });
+      }
+
+      // 2초 슬롯머신 애니메이션 시작
+      isShuffling = true;
+      assignBtn.disabled = true;
+      assignBtnText.textContent = "🌀 두구두구 섞는 중...";
+      boardStatus.textContent = "🎲 역할들을 무작위로 배정하고 있습니다...";
+
+      const roleDropZones = document.querySelectorAll('.role-drop-zone');
+      roleDropZones.forEach(zone => zone.classList.add('slot-rolling'));
+
+      // 임시 학생 이름 슬롯머신 회전
+      const slotTimer = setInterval(() => {
+        roleDropZones.forEach(zone => {
+          const randomStudent = allStudentNames[Math.floor(Math.random() * allStudentNames.length)];
+          const placeholder = zone.querySelector('.drop-placeholder');
+          if (placeholder) placeholder.textContent = `🎲 ${randomStudent}...`;
+        });
+      }, 70);
+
+      // 정확히 2초 후 최종 결과 반영
+      setTimeout(() => {
+        clearInterval(slotTimer);
+
+        // 계획된 배정 적용
+        plannedAssignments.forEach(item => {
+          const role = parsedRoles.find(r => r.id === item.roleId);
+          if (role) role.assigned.push(item.student);
+        });
+
+        roleDropZones.forEach(zone => zone.classList.remove('slot-rolling'));
+        renderBoard();
+
+        isShuffling = false;
+        assignBtn.disabled = false;
+        assignBtnText.textContent = "🎲 남은 인원 슬롯머신 배정";
+        boardStatus.textContent = "🎉 역할 배정이 멋지게 완료되었습니다!";
+
+        // 꽃가루 발사
+        confetti({
+          particleCount: 80,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      }, 2000);
+    });
+
+    // =========================================
+    // [2] PDF 파일 다운로드 (html2pdf)
+    // =========================================
+    pdfBtn.addEventListener('click', () => {
+      const now = new Date();
+      const dateString = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+      pdfDateText.textContent = `배정일: ${dateString}`;
+
+      // PDF 캡처 전용 헤더 임시 활성화
+      pdfHeaderBox.style.display = 'block';
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `우리반_1인1역할_배정표_${now.toISOString().slice(0,10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      boardStatus.textContent = "📄 PDF 파일을 변환하고 있습니다...";
+
+      html2pdf().set(opt).from(document.getElementById('pdfPrintTarget')).save().then(() => {
+        pdfHeaderBox.style.display = 'none';
+        boardStatus.textContent = "✅ PDF 파일이 성공적으로 다운로드되었습니다!";
+      }).catch(err => {
+        console.error(err);
+        pdfHeaderBox.style.display = 'none';
+        alert("PDF 다운로드 중 문제가 발생했습니다. 다시 시도해 주세요.");
+      });
+    });
+
+    // A4 인쇄
+    printBtn.addEventListener('click', () => {
+      const now = new Date();
+      pdfDateText.textContent = `배정일: ${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+      window.print();
+    });
+
+    // 결과 텍스트 복사 (알림장/메신저용)
+    copyBtn.addEventListener('click', () => {
+      const now = new Date().toLocaleDateString('ko-KR');
+      let text = `[🏫 우리 반 1인 1역할 배정 결과 - ${now}]\n\n`;
+      
+      parsedRoles.forEach(role => {
+        const assignedList = role.assigned.length > 0 ? role.assigned.join(', ') : '(공석)';
+        text += `• ${role.name} (${role.assigned.length}/${role.capacity}명): ${assignedList}\n`;
+      });
+
+      const unassigned = allStudentNames.filter(st => !parsedRoles.some(r => r.assigned.includes(st)));
+      if (unassigned.length > 0) {
+        text += `\n* 미배정 학생: ${unassigned.join(', ')}\n`;
+      }
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert("배정 결과가 깔끔하게 복사되었습니다!\n알림장이나 교직원 메신저에 붙여넣기(Ctrl + V)하세요.");
+      }).catch(() => {
+        alert("복사 권한이 차단되어 실패했습니다.");
+      });
+    });
+
+    // 모두 직접 선택(대기풀로 모두 내리기)
+    resetToPoolBtn.addEventListener('click', () => {
+      if (confirm("고정된 학생을 제외하고 모든 학생을 '미배정 대기 명단'으로 이동할까요?\n(직접 드래그해서 배치할 때 유용합니다)")) {
+        const pinnedStudents = pinnedPairs.map(p => p.student);
+        parsedRoles.forEach(r => {
+          r.assigned = r.assigned.filter(st => pinnedStudents.includes(st));
+        });
+        renderBoard();
+      }
+    });
+
+    // 기본 예시 불러오기
+    function loadDefaults() {
+      studentsInput.value = DEFAULT_STUDENTS.join('\n');
+      rolesInput.value = DEFAULT_ROLES_TEXT;
+      pinnedPairs = [];
+      syncData(false);
+    }
+
+    restoreDefaultsBtn.addEventListener('click', () => {
+      if (confirm("모든 입력을 기본 10명 예시로 되돌릴까요?")) {
+        loadDefaults();
+      }
+    });
+
+    // 텍스트 영역 입력 시 실시간 동기화
+    studentsInput.addEventListener('input', () => syncData(true));
+    rolesInput.addEventListener('input', () => syncData(true));
+
+    // 페이지 첫 로드
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDefaults();
+    });
+  </script>
+</body>
+</html>
